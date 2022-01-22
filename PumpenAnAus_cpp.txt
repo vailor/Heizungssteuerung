@@ -1,0 +1,188 @@
+#include <wiringPi.h>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+
+//digitemp_DS9097  -t 0  -q -o 2 | awk 'NF>1 {OFS=""; $1=""; print}'
+//Befehle: gpio -g write 27 1
+//Befehle: gpio -g write 17 1
+
+using namespace std;
+
+
+void actPumpe(int i){
+	if(digitalRead(0) == i)
+	{
+	}
+	else
+	{
+		digitalWrite(0, i);
+		ofstream pumplog;
+		time_t now;
+		time(&now);
+		pumplog.open("/tmp/pumplog", ios::out | ios_base::app);
+		pumplog << ctime(&now) << "Pumperelais wurde auf " << i << " gesetzt" << endl;
+		pumplog.close();
+	}
+}
+
+void actVentil(int i){
+        if(digitalRead(2) == i)
+	{
+        }
+	else
+	{
+                digitalWrite(2, i);
+                ofstream ventillog;
+		time_t now;
+		time(&now);
+                ventillog.open("/tmp/ventillog", ios::out | ios_base::app);
+                ventillog << ctime(&now) << "Ventilrelais wurde auf " << i << " gesetzt" << endl;
+                ventillog.close();
+        }
+
+}
+
+
+int main(int argc, char **argv)
+{
+	if (wiringPiSetup() == -1)
+    		return 1;
+
+	pinMode(0, OUTPUT);
+	pinMode(2, OUTPUT);
+	pinMode(1, PWM_OUTPUT);
+
+	ifstream heizkessel;
+	ifstream puffer_mitte;
+	ifstream puffer_unten;
+	ifstream aussen;
+	
+	pwmSetRange(100);
+
+	heizkessel.open("/ramtmp/heizkessel", ios::in);
+	puffer_mitte.open("/ramtmp/puffer_mitte", ios::in);
+	puffer_unten.open("/ramtmp/puffer_unten", ios::in);
+	aussen.open("/ramtmp/aussen", ios::in);
+
+	if(heizkessel)
+	{
+		double temp_hk;
+		double puff_unten;
+		double temp_diff;
+		int pwm_value;  // pwm_value = -(75/17)*temp_hk + 371,62
+
+		heizkessel >> temp_hk;
+		puffer_unten >> puff_unten;
+		temp_diff = puff_unten + 6;
+
+		cout << temp_hk << endl;
+		cout << puff_unten << endl;
+		cout << temp_diff << endl;
+
+		if((temp_hk > 50)&&(temp_hk < 100)&&(temp_hk != 85))
+		{
+			if((temp_hk > 65) && (temp_hk < 82))
+			{
+				if(temp_diff <= temp_hk)
+				{
+					pwm_value = -(75/17)*temp_hk + 371,62;
+					actPumpe(0);
+					pwmWrite(1, pwm_value);
+				}
+				else if(temp_diff > temp_hk)
+				{
+					actPumpe(1);
+				}
+			}
+			if(temp_hk <= 64)
+			{
+				actPumpe(1);
+			}
+			if(temp_hk >= 82)
+			{
+				actPumpe(0);
+				pwmWrite(1, 100);
+			}
+
+/********************* Old Code *********************			
+			
+			
+			if((temp_hk > 65)&&(temp_hk < 82))
+			{
+				if(temp_diff <= temp_hk)
+				{
+					actPumpe(0);
+				}
+				else
+				if(temp_diff > temp_hk )
+				{
+					actPumpe(1);
+				}
+			}
+			if(temp_hk <= 64)
+			{
+				actPumpe(1);
+			}
+			if(temp_hk >= 82)
+			{
+				actPumpe(0);
+			}
+//			if(temp_hk < 81)
+//			{
+//				actPumpe(1);
+//			}
+		}
+*******************************************************/
+
+			heizkessel.close();
+			puffer_unten.close();
+		} /* End if((temp_hk > 50)&&(temp_hk < 100)&&(temp_hk != 85)) */
+	} /* End if(heizkessel) */
+	
+	if(puffer_mitte)
+	{
+		double puff_mitte;
+		double aus;
+		double oel_aussen;
+		double oel_vorlauf;
+
+		puffer_mitte >> puff_mitte;
+		aussen >> aus;
+
+		oel_aussen = aus - 3;
+
+//		cout << puff_mitte << endl;
+//		cout << aus << endl;
+		cout << oel_aussen << endl;
+
+
+		if((15 < puff_mitte)&&(puff_mitte < 80))
+		{
+			oel_vorlauf = 20.0 + 27 * pow(((20.0 - oel_aussen) * 0.05) , 0.8);
+
+			ofstream vorlauf;
+			vorlauf.open("/ramtmp/vorlauf", ios::out | ios::trunc);
+			vorlauf << oel_vorlauf<<endl;
+			vorlauf.close();
+
+			if(puff_mitte >= oel_vorlauf)
+			{
+				actVentil(0);
+				cout << oel_vorlauf << endl;
+			}
+			else
+			if(puff_mitte < oel_vorlauf)
+			{
+				actVentil(1);
+			}
+		}
+		puffer_mitte.close();
+		aussen.close();
+	}
+
+}

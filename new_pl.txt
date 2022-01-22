@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<title></title>
+</head>
+<body>
+	<canvas id="controlPanel" width="800" height="600">
+		
+	</canvas>
+</body>
+<script type="text/javascript">
+	var canvas = document.getElementById('controlPanel');
+	//Colors
+	OUTLINE 	= "#000000";
+	BACKGROUND 	= "#9FC0D0";
+	FONT	 	= "#FFFFFF";
+	
+	
+	if(canvas && canvas.getContext){
+		var ctx = canvas.getContext("2d");
+		if(ctx){
+			//background
+			ctx.fillStyle = BACKGROUND
+			ctx.fillRect(0,0,ctx.canvas.width, ctx.canvas.height);
+			
+			
+			ctx.fillStyle = OUTLINE;
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.moveTo(150, 100);
+			ctx.lineTo(150, 50);
+			ctx.lineTo(550, 50);
+			ctx.lineTo(550, 100);
+			ctx.stroke();
+			
+			ctx.beginPath();
+			ctx.moveTo(550, 300);
+			ctx.lineTo(550, 550);
+			ctx.lineTo(150, 550);
+			ctx.lineTo(150, 500);
+			ctx.stroke();
+			
+			drawTank(ctx, 50, 100, 200, 400);
+			drawHeater(ctx, 500, 100, 100, 200);
+
+		}
+	}
+	
+	function drawTank(ctx, x, y, width, height){
+			var boxWidth, boxHeight, radius;
+			boxWidth = 60;
+			boxHeight = 25;
+			radius = width / 2;
+			
+			ctx.fillStyle = OUTLINE;
+			ctx.lineWidth = 5;
+			
+			//Tank outline
+			ctx.beginPath();
+			ctx.arc (x + radius, y + radius, radius, Math.PI, 0, false);
+			ctx.lineTo(x + width, y + height - radius);
+			ctx.arc (x + radius, y + height - radius, radius, 0, Math.PI, false);
+			ctx.closePath();
+			ctx.stroke();
+			
+			//Temperature based filling
+			var gradient = ctx.createLinearGradient(0, y, 0, y + height);
+			gradient.addColorStop(0, "#FF0000");
+			gradient.addColorStop(0.5, "#FF0000");
+			gradient.addColorStop(1, "#0099FF");
+			ctx.fillStyle = gradient;
+			ctx.fill();
+			
+			//Temperature Boxes
+			ctx.fillStyle 	= OUTLINE;
+			ctx.fillRect(x + width - (boxWidth/2), y + radius - (boxHeight/2), boxWidth, boxHeight)
+			ctx.fillRect(x + width - (boxWidth/2), y + (height / 2) - (boxHeight/2), boxWidth, boxHeight)
+			ctx.fillRect(x + width - (boxWidth/2), y + height - radius - (boxHeight/2), boxWidth, boxHeight)
+			
+			//Temperature display
+			ctx.font			= "20px Georgia";
+			ctx.textAlign 		= "center";
+			ctx.textBaseline	= 'middle';
+			ctx.fillStyle		= FONT;
+			ctx.fillText("50 ° C", x + width, y + radius) //Temp 1
+			ctx.fillText("50 ° C", x + width, y + (height / 2)) //Temp 2
+			ctx.fillText("50 ° C", x + width, y + height - radius); //Temp 3
+			
+			
+	}
+
+	function drawHeater(ctx, x, y, width, height){
+		var boxWidth, boxHeight, radius;
+		boxWidth = 60;
+		boxHeight = 25;
+		
+		ctx.fillStyle 	= OUTLINE;
+		ctx.lineWidth 	= 3;
+		ctx.strokeRect(x,y,width,height);
+		ctx.fillRect(x + width - (boxWidth/2), y + (height/2)- (boxHeight/2), boxWidth, boxHeight);
+		ctx.fillStyle	= FONT;
+		ctx.fillText("120° C", x + width, y + (height/2)) //Temp 2
+	}
+	
+	</script>
+</html>

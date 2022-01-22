@@ -1,0 +1,17 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<title>Heizungssteuerung</title>
+</head>
+<body> <h1>Temperatur Heute</h1>
+<img src="graph.pl?type=day">
+<h3>Pumpe: <?php echo exec("/usr/local/bin/gpio -g read 17 2>&1") == "1" ? "Ausgeschaltet":"Eingeschaltet" ?></h3>
+<h3>Ölofen: <?php echo exec("/usr/local/bin/gpio -g read 27 2>&1") == "1" ? "Aktiv":"Inaktiv" ?></h3> </body>
+<h4>Kessel: <?php echo file_get_contents("/ramtmp/heizkessel") ?> °C</h4>
+<h4>Puffer oben: <?php echo file_get_contents("/ramtmp/puffer_oben") ?> °C</h4>
+<h4>Puffer mitte: <?php echo file_get_contents("/ramtmp/puffer_mitte") ?> °C</h4>
+<h4>Puffer unten: <?php echo file_get_contents("/ramtmp/puffer_unten") ?> °C</h4>
+<h4>Außen: <?php echo file_get_contents("/ramtmp/aussen") ?> °C</h4>
+<h4>Vorlauftemperatur: <?php echo file_get_contents("/ramtmp/vorlauf") ?> °C</h4>
+</html>

@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+#
+# CGI script to create image using RRD graph 
+use CGI qw(:all);
+use RRDs;
+use strict;
+
+# path to database
+my $rrd='/home/pi/temperature/temperature.rrd';
+
+# size
+my $width=1200;
+my $height=600;
+
+# read and check query params
+my $query=new CGI;
+my $type=$query->param('type');
+$type='day' unless $type =~ /day|week|month|year/; 
+
+# write image into temp file
+my $tmpfile="/tmp/graphx_$$.png";
+my @opts=("-v", "°C",
+"-w", $width,
+"-h", $height,
+"-s", "now - 1 $type",
+"-e", "now",
+"-D",
+"-E");
+RRDs::graph($tmpfile,
+  @opts,
+  "DEF:temp0=$rrd:temp0:AVERAGE",
+  "LINE2:temp0#00FF00:Kessel",
+  "DEF:temp1=$rrd:temp1:AVERAGE",
+  "LINE2:temp1#0000FF:Puffer oben",
+  "DEF:temp2=$rrd:temp2:AVERAGE",
+  "LINE2:temp2#FF00FF:Puffer Mitte",
+  "DEF:temp3=$rrd:temp3:AVERAGE",
+  "LINE2:temp3#FF0000:Außen",
+  "DEF:temp4=$rrd:temp4:AVERAGE",
+  "LINE2:temp4#000000:Puffer unten"
+);
+# check error
+my $err=RRDs::error;
+die "$err\n" if $err;
+
+# feed tmpfile to stdout
+open(IMG, $tmpfile) or die "can't open $tmpfile\n";
+print header(-type=>'image/png', -expires=>'+1m');
+print <IMG>;
+close IMG;
+unlink $tmpfile;
